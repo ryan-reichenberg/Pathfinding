@@ -1,4 +1,4 @@
-package com.assignment1;
+package com.assignment1.datastructures;
 
 import java.util.ArrayList;
 import java.util.List;
