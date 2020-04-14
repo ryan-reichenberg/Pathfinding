@@ -1,6 +1,7 @@
 package com.assignment1;
 
-import com.assignment1.datastructures.Tree;
+import com.assignment1.datastructures.Node;
+import com.assignment1.exception.InvalidMapConfigurationException;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -28,26 +29,31 @@ public class FileHandler {
                         // Wow.
                         //TODO: For loop this out.
                         line = line.replaceAll(" ", "");
-                        System.out.println(line);
                         String[] split = line.split("\\|");
-                        System.out.println(split[2]);
                         split[0] = split[0].substring(1, split[0].length() - 1);
                         split[1] = split[1].substring(1, split[1].length() - 1);
 
                         String[] split1 = split[0].split(",");
                         String[] split2 = split[1].split(",");
+//                        System.out.println(split1[0]);
+//                        System.out.println(split1[1]);
+//                        System.out.println(split2[0]);
+//                        System.out.println(split2[1]);
+                        builder.addGoalNode(new Node<>(new Location(Integer.valueOf(split1[0]), Integer.valueOf(split1[1]))));
+                        builder.addGoalNode(new Node<>(new Location(Integer.valueOf(split2[0]), Integer.valueOf(split2[1]))));
                         continue;
                     }
                     line = line.substring(1, line.length() - 1);
                     String[] split  = line.split(",");
                     if(split.length == 2){
                         // Start node
-                        System.out.println(split[0]);
+                        builder.addStartNode(new Node<>(new Location(Integer.valueOf(split[0]), Integer.valueOf(split[1]))));
                     }else if (split.length == 4){
                         //wall
-                        System.out.println(split[0]);
+                        builder.addWall(new Node<>(new Wall(Integer.valueOf(split[0]), Integer.valueOf(split[1]),
+                                Integer.valueOf(split[2]), Integer.valueOf(split[3]))));
                     } else {
-                        // Invalid Node configuration
+                        throw new InvalidMapConfigurationException("Unknown Node/Location configuration");
 
                     }
                 }
@@ -63,6 +69,4 @@ public class FileHandler {
 
 
     private static void buildMap(){}
-
-    private static void populateTree(){}
 }

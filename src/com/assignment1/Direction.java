@@ -1,9 +1,9 @@
 package com.assignment1;
 
 public enum Direction {
-    UP(0, 1),
-    DOWN(0, -1),
+    UP(0, -1),
     LEFT(-1, 0),
+    DOWN(0, 1),
     RIGHT(1, 0);
 
     private int x,y;
