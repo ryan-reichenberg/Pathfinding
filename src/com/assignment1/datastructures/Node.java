@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class Node<T> {
+public class Node<T>{
     private T value;
     private Node<T> parent;
     private Direction direction;
@@ -62,6 +62,9 @@ public class Node<T> {
         Collections.reverse(path);
         return path;
 
+    }
+    public BestFirstNode<T> toBestFirstNode(){
+        return new BestFirstNode<>(this);
     }
     @Override
     public String toString() {
