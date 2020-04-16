@@ -63,9 +63,15 @@ public class Node<T>{
         return path;
 
     }
+
     public BestFirstNode<T> toBestFirstNode(){
         return new BestFirstNode<>(this);
     }
+
+    public AStarNode<T> toAStarNode(){
+        return new AStarNode<>(this);
+    }
+
     @Override
     public String toString() {
         return "Node{" +

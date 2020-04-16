@@ -45,12 +45,12 @@ public class Map {
         return endNodes;
     }
 
-    public boolean isInMap(Location location) {
+    private boolean isInMap(Location location) {
         return location.getX() >= 0 && location.getX() <=  getWidth() -1
                 &&  location.getY() >= 0 && location.getY() <= getHeight() -1;
     }
-    public boolean isInWall(Location location){
-        for(Node<Location> wall: walls){
+    private boolean isInWall(Location location){
+        for(Node<Location> wall: getWalls()){
             if(((Wall)wall.getValue()).isInWall(location)){
                 return true;
             }
@@ -68,11 +68,6 @@ public class Map {
         return Math.abs(location.getX() - endNodes.get(0).getValue().getX()) + Math.abs(location.getY() - endNodes.get(0).getValue().getY());
     }
 
-    public SearchResult search(SearchType type){
-        Collection collection = determineDataStructureForType(type);
-        return search(collection,  type);
-    }
-
     private Collection determineDataStructureForType(SearchType type) {
         switch(type){
             case DFS:
@@ -87,19 +82,13 @@ public class Map {
         }
     }
 
+    public SearchResult search(SearchType type){
+        Collection collection = determineDataStructureForType(type);
+        return search(collection,  type);
+    }
+
     private SearchResult search(Collection collection, SearchType type) {
-        Node<Location> startNode = getStartNode();
-        if (type == SearchType.A_STAR) {
-            AStarNode<Location> node = new AStarNode<>(startNode);
-            node.setH(this.calculateHeuristic(startNode));
-            startNode = node;
-        } else if (type == SearchType.GBFS){
-            BestFirstNode<Location> node = new BestFirstNode<>(startNode);
-            node.setH(this.calculateHeuristic(startNode));
-            startNode = node;
-        }
-        collection.add(startNode);
-        visited.add(startNode);
+        addNodeToFrontier(getStartNode(), collection, type);
         while (!collection.isEmpty()) {
             Object element = collection instanceof Stack ? ((Stack) collection).pop() : ((Queue) collection).poll();
             Node<Location> current = (Node<Location>) element;
@@ -114,17 +103,7 @@ public class Map {
                 if (this.isInMap(location)) {
                     if (!this.isInWall(location)) {
                             Node<Location> node = new Node<>(location, current, direction);
-                            if (type == SearchType.A_STAR) {
-                                ((AStarNode<Location>) node).setH(this.calculateHeuristic(startNode));
-                            } else if (type == SearchType.GBFS){
-                                BestFirstNode<Location> gbfsNode = new BestFirstNode<>(startNode);
-                                gbfsNode.setH(this.calculateHeuristic(startNode));
-                                node =  gbfsNode;
-                            }
-                        if (!contains(node)) {
-                            collection.add(node);
-                            visited.add(node);
-                        }
+                            addNodeToFrontier(node, collection, type);
                     }
                 }
             }
@@ -132,6 +111,29 @@ public class Map {
         System.out.println("Couldn't find solution");
         return null;
 
+    }
+
+    private void addNodeToFrontier(Node<Location> node, Collection collection, SearchType  type){
+        if (type == SearchType.A_STAR) {
+            AStarNode<Location> aStarNode = new AStarNode<>(node);
+            aStarNode.setH(this.calculateHeuristic(aStarNode));
+            // If parent is null, we can assume start node,otherwise increment.
+            int g = aStarNode.getParent() == null ? 0 : ((AStarNode)aStarNode.getParent()).getG() +1;
+            aStarNode.setG(g);
+            checkForVisited(collection, aStarNode);
+        } else if (type == SearchType.GBFS) {
+            BestFirstNode<Location> gbfsNode = new BestFirstNode<>(node);
+            gbfsNode.setH(this.calculateHeuristic(gbfsNode));
+            checkForVisited(collection, gbfsNode);
+        }else {
+            checkForVisited(collection,node);
+        }
+    }
+    private void checkForVisited(Collection collection, Node<Location> node) {
+        if (!contains(node)) {
+            collection.add(node);
+            visited.add(node);
+        }
     }
 
     private boolean contains(Node<Location> node) {
