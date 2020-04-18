@@ -6,6 +6,6 @@ public class Main {
 
     public static void main(String[] args) {
         Map map = FileHandler.readFile("map.txt");
-        map.search(SearchType.A_STAR);
+        map.search(SearchType.BFS);
     }
 }

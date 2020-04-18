@@ -88,7 +88,11 @@ public class Map {
     }
 
     private SearchResult search(Collection collection, SearchType type) {
-        addNodeToFrontier(getStartNode(), collection, type);
+        int depthBound;
+        Node<Location> startNode =  addNodeToFrontier(getStartNode(), collection, type);
+        if(type == SearchType.IDA_STAR && startNode instanceof AStarNode){
+            depthBound = ((AStarNode<Location>) startNode).getF();
+        }
         while (!collection.isEmpty()) {
             Object element = collection instanceof Stack ? ((Stack) collection).pop() : ((Queue) collection).poll();
             Node<Location> current = (Node<Location>) element;
@@ -103,7 +107,10 @@ public class Map {
                 if (this.isInMap(location)) {
                     if (!this.isInWall(location)) {
                             Node<Location> node = new Node<>(location, current, direction);
-                            addNodeToFrontier(node, collection, type);
+                            Node<Location> newNode = addNodeToFrontier(node, collection, type);
+                            if(type == SearchType.IDA_STAR && newNode instanceof AStarNode){
+                                depthBound = ((AStarNode<Location>) node).getF();
+                            }
                     }
                 }
             }
@@ -112,21 +119,27 @@ public class Map {
         return null;
 
     }
-
-    private void addNodeToFrontier(Node<Location> node, Collection collection, SearchType  type){
-        if (type == SearchType.A_STAR) {
+    private Node<Location> addNodeToFrontier(Node<Location> node, Collection collection, SearchType type){
+        if (type == SearchType.A_STAR || type == SearchType.IDA_STAR) {
             AStarNode<Location> aStarNode = new AStarNode<>(node);
             aStarNode.setH(this.calculateHeuristic(aStarNode));
             // If parent is null, we can assume start node,otherwise increment.
             int g = aStarNode.getParent() == null ? 0 : ((AStarNode)aStarNode.getParent()).getG() +1;
             aStarNode.setG(g);
-            checkForVisited(collection, aStarNode);
+            if(type == SearchType.A_STAR) {
+                checkForVisited(collection, aStarNode);
+            } else {
+                collection.add(aStarNode);
+            }
+            return aStarNode;
         } else if (type == SearchType.GBFS) {
             BestFirstNode<Location> gbfsNode = new BestFirstNode<>(node);
             gbfsNode.setH(this.calculateHeuristic(gbfsNode));
             checkForVisited(collection, gbfsNode);
+            return gbfsNode;
         }else {
             checkForVisited(collection,node);
+            return node;
         }
     }
     private void checkForVisited(Collection collection, Node<Location> node) {

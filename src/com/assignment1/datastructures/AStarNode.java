@@ -1,9 +1,12 @@
 package com.assignment1.datastructures;
 
-import com.assignment1.Direction;
 
 public class AStarNode<T> extends Node<T> implements Comparable<AStarNode<T>> {
     private int g,h;
+
+    public AStarNode(Node<T> node) {
+        super(node.getValue(), node.getParent(), node.getDirection());
+    }
 
     public int getF() {
         return g + h;
@@ -20,16 +23,6 @@ public class AStarNode<T> extends Node<T> implements Comparable<AStarNode<T>> {
 
     public void setH(int h) {
         this.h = h;
-    }
-
-    public AStarNode(Node<T> node) {
-        super(node.getValue(), node.getParent(), node.getDirection());
-    }
-    public AStarNode(T value, Node<T> parent, Direction direction) {
-        super(value, parent, direction);
-    }
-    public AStarNode(T value){
-        super(value);
     }
 
 
