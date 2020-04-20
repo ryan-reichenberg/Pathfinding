@@ -5,6 +5,7 @@ public enum SearchType {
     DFS,
     BFS,
     GBFS,
-    IDA_STAR
+    IDA_STAR,
+    IDDFS
 
 }

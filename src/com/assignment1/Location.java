@@ -1,6 +1,5 @@
 package com.assignment1;
 
-import java.text.MessageFormat;
 
 public class Location {
 
