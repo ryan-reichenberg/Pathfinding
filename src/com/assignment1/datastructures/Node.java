@@ -11,8 +11,8 @@ public class Node<T>{
     private T value;
     private Node<T> parent;
     private Direction direction;
+    private int depth;
     private List<String> path = new ArrayList<>();
-    private int numSteps = 0;
 
     public Direction getDirection() {
         return direction;
@@ -28,13 +28,7 @@ public class Node<T>{
       this(value, null, null);
     }
 
-    public int getNumSteps() {
-        return numSteps;
-    }
 
-    public void incrementStepNumber() {
-        this.numSteps += 1;
-    }
 
     public T getValue() {
         return value;
@@ -45,8 +39,12 @@ public class Node<T>{
         return parent;
     }
 
-    public void setParent(Node<T> parent) {
-        this.parent = parent;
+    public int getDepth() {
+        return depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     public List<String> getPath(){
@@ -54,23 +52,14 @@ public class Node<T>{
         while(parent != null){
             if(parent.getDirection() != null) {
                 path.add(parent.getDirection().name());
-                incrementStepNumber();
             }
             parent = parent.getParent();
         }
-        System.out.println(path.size());
         Collections.reverse(path);
         return path;
 
     }
 
-    public BestFirstNode<T> toBestFirstNode(){
-        return new BestFirstNode<>(this);
-    }
-
-    public AStarNode<T> toAStarNode(){
-        return new AStarNode<>(this);
-    }
 
     @Override
     public String toString() {

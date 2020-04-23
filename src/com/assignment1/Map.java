@@ -16,9 +16,8 @@ public class Map {
     private List<Node<Location>> endNodes;
     private List<Node<Location>> visited;
     private List<Integer> nextDepthBound;
-    private int maxDepth = Integer.MAX_VALUE;
     private int depthBound = 0;
-    private int depth = 0;
+    private boolean solution = false;
 
 
     public Map(int width, int height, List<Node<Location>> walls, Node<Location> startNode, List<Node<Location>> endNodes) {
@@ -71,19 +70,17 @@ public class Map {
      */
     public int calculateHeuristic(Node<Location> node) {
         Location location = node.getValue();
-        return Math.abs(location.getX()  - endNodes.get(0).getValue().getX()) + Math.abs(location.getX() - endNodes.get(0).getValue().getY());
-    }
-    public int calculateHeuristic1(Node<Location> node) {
-        Location location = node.getValue();
-        return Math.abs(this.getEndNodes().get(0).getValue().getX() - location.getX()) + Math.abs(this.getEndNodes().get(0).getValue().getY() - location.getX());
+        return Math.abs(location.getX()  - endNodes.get(0).getValue().getX()) + Math.abs(location.getY() - endNodes.get(0).getValue().getY());
     }
 
     private Collection determineDataStructureForType(SearchType type) {
         switch(type){
             case DFS:
-//            case IDDFS:
+            case IDDFS:
+                System.out.println("Using Stack");
                 return new  Stack();
             case BFS:
+                System.out.println("Using Queue");
                 return new ArrayDeque();
             case  A_STAR:
             case IDA_STAR:
@@ -96,10 +93,19 @@ public class Map {
 
     public SearchResult search(SearchType type){
         Collection collection = determineDataStructureForType(type);
-        return search(collection,  type);
+        SearchResult result = null;
+        if(type == SearchType.IDDFS) {
+            for(int depthLevel = 0; depthLevel <= Integer.MAX_VALUE; depthLevel++){
+                result = search(collection, type, depthLevel);
+                if(solution) break;
+                visited.clear();
+            }
+            return result;
+        }
+        return search(collection, type, 0);
     }
 
-    private SearchResult search(Collection collection, SearchType type) {
+    private SearchResult search(Collection collection, SearchType type, int depthLevel) {
 
         Node<Location> startNode =  addNodeToFrontier(getStartNode(), collection, type);
         if(type == SearchType.IDA_STAR && startNode instanceof AStarNode){
@@ -109,30 +115,25 @@ public class Map {
             //System.out.println(collection);
             Object element = collection instanceof Stack ? ((Stack) collection).pop() : ((Queue) collection).poll();
             Node<Location> current = (Node<Location>) element;
-            System.out.println("Current: "+current.getValue());
-            if(collection instanceof Queue){
-                System.out.println("Queue");
-            }
             // Check for goal
             if (current.getValue().equals(this.getEndNodes().get(0).getValue())) {
 //                Collections.sort(collection);
                 System.out.println("We found goal");
                 System.out.println(current);
                 System.out.println(current.getPath());
+                if(type == SearchType.IDDFS)
+                    System.out.println("Found at depth: "+current.getDepth());
                 System.out.println(visited.size());
                 visited.forEach(visitedNode -> System.out.println(visitedNode));
-//                if(type == SearchType.IDDFS)
-//                    System.out.println("Found at depth: "+depth);
+                solution = true;
                 return null;
             }
-//            System.out.println("H: "+((AStarNode)current).getH());
-//            System.out.println("G: "+((AStarNode)current).getG());
-//            System.out.println("F: "+((AStarNode)current).getF());
-//            visited.forEach(visitedNode -> System.out.println(visitedNode));
+
             // Add children
+            if(type == SearchType.IDDFS && current.getDepth() >= depthLevel) {
+                continue;
+            }
             addChildrenToFrontier(collection, current, type);
-            collection.forEach(queue -> System.out.println("Head: "+((Node)queue).getValue()));
-            //visited.forEach(visitedNode -> System.out.println("visited: "+visitedNode));
             // IDA Check
             if(type == SearchType.IDA_STAR && collection.size() == 1){
                Collections.sort(nextDepthBound);
@@ -141,7 +142,8 @@ public class Map {
                nextDepthBound.clear();
             }
         }
-        System.out.println("Couldn't find solution");
+        System.out.println("Couldn't find solution at depth: "+ depthLevel);
+        visited.forEach(visitedNode -> System.out.println(visitedNode));
         return null;
 
     }
@@ -153,17 +155,13 @@ public class Map {
                 if (!this.isInWall(location)) {
                     Node<Location> node = new Node<>(location, current, direction);
                     Node<Location> newNode = addNodeToFrontier(node, collection, type);
-                    if(type == SearchType.IDA_STAR && newNode instanceof AStarNode) {
+                    if (type == SearchType.IDA_STAR && newNode instanceof AStarNode) {
                         if (((AStarNode) newNode).getF() >= depthBound) {
                             // Don't worry about duplicates
                             nextDepthBound.add(((AStarNode) newNode).getF());
                         }
                     }
-                }else {
-                    System.out.println("In wall: "+ location);
                 }
-            }else {
-                System.out.println("Not in map: "+ location);
             }
         }
 
@@ -172,8 +170,8 @@ public class Map {
     private Node<Location> addNodeToFrontier(Node<Location> node, Collection collection, SearchType type){
         if (type == SearchType.A_STAR || type == SearchType.IDA_STAR) {
             AStarNode<Location> aStarNode = new AStarNode<>(node);
-            aStarNode.setH(this.calculateHeuristic1(aStarNode));
-            // If parent is null, we can assume start node,otherwise increment.
+            aStarNode.setH(this.calculateHeuristic(aStarNode));
+            // If parent is null, we can assume start node, otherwise increment.
             int g = aStarNode.getParent() == null ? 0 : ((AStarNode)aStarNode.getParent()).getG() + 1;
             aStarNode.setG(g);
             if(type == SearchType.A_STAR) {
@@ -188,6 +186,8 @@ public class Map {
             checkForVisited(collection, gbfsNode);
             return gbfsNode;
         }else {
+            int depth = node.getParent() == null ? 0 : node.getParent().getDepth() + 1;
+            node.setDepth(depth);
             checkForVisited(collection,node);
             return node;
         }
@@ -196,8 +196,6 @@ public class Map {
         if (!contains(node)) {
             collection.add(node);
             visited.add(node);
-        } else {
-            System.out.println("Already visited: "+ node.getValue());
         }
     }
 
