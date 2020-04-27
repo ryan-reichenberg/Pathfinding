@@ -12,7 +12,7 @@ public class Node<T>{
     private Node<T> parent;
     private Direction direction;
     private int depth;
-    private List<String> path = new ArrayList<>();
+    private List<Node<T>> path = new ArrayList<>();
 
     public Direction getDirection() {
         return direction;
@@ -47,11 +47,11 @@ public class Node<T>{
         this.depth = depth;
     }
 
-    public List<String> getPath(){
-        path.add(this.getDirection().name());
+    public List<Node<T>> getPath(){
+        path.add(this);
         while(parent != null){
             if(parent.getDirection() != null) {
-                path.add(parent.getDirection().name());
+                path.add(parent);
             }
             parent = parent.getParent();
         }

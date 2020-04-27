@@ -9,16 +9,21 @@ public class MapBuilder {
 
     private int width = 0;
     private int height = 0;
-    private List<Node<Location>> walls;
+    private List<Node<Wall>> walls;
     private Node<Location> startNode;
     private List<Node<Location>> endNodes;
+    private boolean ui = false;
+
+    public void setUI(boolean ui) {
+        this.ui = ui;
+    }
 
     public MapBuilder() {
         this.walls = new ArrayList<>();
         this.endNodes = new ArrayList<>();
     }
 
-    public MapBuilder addWall(Node<Location> node){
+    public MapBuilder addWall(Node<Wall> node){
         this.walls.add(node);
         return this;
     }
@@ -46,6 +51,6 @@ public class MapBuilder {
     }
 
     public Map build() {
-        return new Map(this.width, this.height, this.walls, this.startNode, this.endNodes);
+        return new Map(this.width, this.height, this.walls, this.startNode, this.endNodes, this.ui);
     }
 }

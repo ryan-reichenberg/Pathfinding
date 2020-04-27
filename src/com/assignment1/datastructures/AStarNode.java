@@ -3,23 +3,24 @@ package com.assignment1.datastructures;
 
 
 public class AStarNode<T> extends Node<T> implements Comparable<AStarNode<T>>{
-    private int g,h = 0;
+    private double g;
+    private double h;
 
     public AStarNode(Node<T> node) {
         super(node.getValue(), node.getParent(), node.getDirection());
     }
 
 
-    public int getF() {
+    public double getF() {
         return g + h;
     }
 
 
-    public int getG() {
+    public double getG() {
         return g;
     }
 
-    public void setG(int g) {
+    public void setG(double g) {
         this.g = g;
     }
 
@@ -41,6 +42,6 @@ public class AStarNode<T> extends Node<T> implements Comparable<AStarNode<T>>{
 
     @Override
     public int compareTo(AStarNode<T> o) {
-        return this.getF() - o.getF();
+        return (int)(this.getF() - o.getF());
     }
 }

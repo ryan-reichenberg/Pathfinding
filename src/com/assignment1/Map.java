@@ -5,40 +5,64 @@ import com.assignment1.algorithms.SearchType;
 import com.assignment1.datastructures.AStarNode;
 import com.assignment1.datastructures.BestFirstNode;
 import com.assignment1.datastructures.Node;
+import com.assignment1.ui.Launcher;
 
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class Map {
-    private int width = 0;
-    private int height = 0;
-    private List<Node<Location>> walls;
+public class Map extends JPanel {
+
+    private int mazeWidth = 0;
+    private int mazeHeight = 0;
+    private List<Node<Wall>> walls;
     private Node<Location> startNode;
     private List<Node<Location>> endNodes;
-    private List<Node<Location>> visited;
-    private List<Integer> nextDepthBound;
-    private int depthBound = 0;
+    public List<Node<Location>> visited;
+    private List<Double> nextDepthBound;
+    private List<Node<Location>> path;
+    private Node<Location> current = null;
+    // Used to quickly determine if node with same state is in the open set and to retrieve that states best F value
+    private HashMap<Node<Location>, Double> tempFrontier;
+    private double depthBound = 0;
     private boolean solution = false;
+    private boolean ui;
+    private BasicStroke defaultStroke;
+    private BasicStroke widerStroke;
 
 
-    public Map(int width, int height, List<Node<Location>> walls, Node<Location> startNode, List<Node<Location>> endNodes) {
-        this.width = width;
-        this.height = height;
+    public Map(int mazeWidth, int mazeHeight, List<Node<Wall>> walls, Node<Location> startNode, List<Node<Location>> endNodes, boolean ui) {
+        this.mazeWidth = mazeWidth;
+        this.mazeHeight = mazeHeight;
         this.walls = walls;
         this.startNode = startNode;
         this.endNodes = endNodes;
         this.visited = new ArrayList<>();
         this.nextDepthBound = new ArrayList<>();
+        this.tempFrontier = new HashMap<>();
+        this.path = new ArrayList<>();
+        this.ui = ui;
+
+        this.defaultStroke = new BasicStroke();
+        this.widerStroke = new BasicStroke(2);
+
+
+        setBorder(new LineBorder(Color.gray));
     }
 
-    public int getWidth() {
-        return width;
+
+    public int getMazeWidth() {
+        return mazeWidth;
     }
 
-    public int getHeight() {
-        return height;
+    public int getMazeHeight() {
+        return mazeHeight;
     }
 
-    public List<Node<Location>> getWalls() {
+    public List<Node<Wall>> getWalls() {
         return walls;
     }
 
@@ -51,12 +75,12 @@ public class Map {
     }
 
     public boolean isInMap(Location location) {
-        return location.getX() >= 0 && location.getX() <=  getWidth() -1
-                &&  location.getY() >= 0 && location.getY() <= getHeight() -1;
+        return location.getX() >= 0 && location.getX() <=  getMazeWidth() -1
+                &&  location.getY() >= 0 && location.getY() <= getMazeHeight() -1;
     }
     public boolean isInWall(Location location){
-        for(Node<Location> wall: getWalls()){
-            if(((Wall)wall.getValue()).isInWall(location)){
+        for(Node<Wall> wall: getWalls()){
+            if(wall.getValue().isInWall(location)){
                 return true;
             }
         }
@@ -77,10 +101,8 @@ public class Map {
         switch(type){
             case DFS:
             case IDDFS:
-                System.out.println("Using Stack");
                 return new  Stack();
             case BFS:
-                System.out.println("Using Queue");
                 return new ArrayDeque();
             case  A_STAR:
             case IDA_STAR:
@@ -91,7 +113,7 @@ public class Map {
         }
     }
 
-    public SearchResult search(SearchType type){
+    public SearchResult search(SearchType type) throws InterruptedException {
         Collection collection = determineDataStructureForType(type);
         SearchResult result = null;
         if(type == SearchType.IDDFS) {
@@ -105,27 +127,26 @@ public class Map {
         return search(collection, type, 0);
     }
 
-    private SearchResult search(Collection collection, SearchType type, int depthLevel) {
+    private SearchResult search(Collection collection, SearchType type, int depthLevel) throws InterruptedException {
 
         Node<Location> startNode =  addNodeToFrontier(getStartNode(), collection, type);
         if(type == SearchType.IDA_STAR && startNode instanceof AStarNode){
             depthBound = ((AStarNode<Location>) startNode).getF();
         }
         while (!collection.isEmpty()) {
-            //System.out.println(collection);
             Object element = collection instanceof Stack ? ((Stack) collection).pop() : ((Queue) collection).poll();
-            Node<Location> current = (Node<Location>) element;
+            this.current = (Node<Location>) element;
+//            repaint();
             // Check for goal
             if (current.getValue().equals(this.getEndNodes().get(0).getValue())) {
-//                Collections.sort(collection);
-                System.out.println("We found goal");
-                System.out.println(current);
-                System.out.println(current.getPath());
+                for(Node<Location> location : current.getPath()){
+                    Thread.sleep(400);
+                    this.path.add(location);
+                    repaint();
+                }
+                this.path = current.getPath();
                 if(type == SearchType.IDDFS)
                     System.out.println("Found at depth: "+current.getDepth());
-                System.out.println(visited.size());
-                visited.forEach(visitedNode -> System.out.println(visitedNode));
-                solution = true;
                 return null;
             }
 
@@ -141,6 +162,8 @@ public class Map {
                addNodeToFrontier(getStartNode(), collection, SearchType.IDA_STAR);
                nextDepthBound.clear();
             }
+            repaint();
+            Thread.sleep(500);
         }
         System.out.println("Couldn't find solution at depth: "+ depthLevel);
         visited.forEach(visitedNode -> System.out.println(visitedNode));
@@ -155,6 +178,7 @@ public class Map {
                 if (!this.isInWall(location)) {
                     Node<Location> node = new Node<>(location, current, direction);
                     Node<Location> newNode = addNodeToFrontier(node, collection, type);
+                    if(newNode == null) continue;
                     if (type == SearchType.IDA_STAR && newNode instanceof AStarNode) {
                         if (((AStarNode) newNode).getF() >= depthBound) {
                             // Don't worry about duplicates
@@ -172,10 +196,17 @@ public class Map {
             AStarNode<Location> aStarNode = new AStarNode<>(node);
             aStarNode.setH(this.calculateHeuristic(aStarNode));
             // If parent is null, we can assume start node, otherwise increment.
-            int g = aStarNode.getParent() == null ? 0 : ((AStarNode)aStarNode.getParent()).getG() + 1;
+            double g = aStarNode.getParent() == null ? 0 : ((AStarNode)aStarNode.getParent()).getG() + 1;
             aStarNode.setG(g);
+
+            // Check if child node is in queue and if the version in queue has a smaller F value
+            AStarNode previousVersion = getValueFromCollection(collection, node);
+            if(previousVersion != null && previousVersion.getF() < aStarNode.getF()){
+                return null;
+            }
             if(type == SearchType.A_STAR) {
                 checkForVisited(collection, aStarNode);
+                tempFrontier.put(aStarNode, aStarNode.getF());
             } else {
                 collection.add(aStarNode);
             }
@@ -199,15 +230,95 @@ public class Map {
         }
     }
 
+    // Utility functions/optimisations
     private boolean contains(Node<Location> node) {
         return this.visited.stream().anyMatch(visitedNode -> visitedNode.getValue().equals(node.getValue()));
+    }
+
+    // contain APIs on the collection check for explicit matches but we are only interested in the location value.
+    private AStarNode<Location> getValueFromCollection(Collection collection, Node<Location> other){
+        return ((AStarNode) collection.stream().filter(node -> ((AStarNode) node).getValue().equals(other.getValue())).findFirst().orElse(null));
+    }
+
+    public void launch(SearchType type) throws InterruptedException {
+        if(ui){
+            new Launcher(this).launch(type);
+        } else {
+            //  TODO: Return SearchResult
+            search(type);
+        }
+
+    }
+
+    @Override
+    protected void paintComponent(Graphics g1) {
+        super.paintComponent(g1);
+
+        Graphics2D g = (Graphics2D) g1;
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Map generation
+        for (int x = 0; x < this.getMazeWidth(); x++) {
+            for(int y = 0; y < this.getMazeHeight(); y++) {
+                g.setColor(new Color(220, 220, 220));
+                g.drawRect(x * 40, y * 40, 40, 40);
+            }
+        }
+        // Paint Start node
+        g.setColor(new Color(78, 189, 30));
+        g.fillRect(this.getStartNode().getValue().getX() * 40, this.getStartNode().getValue().getY() * 40, 40, 40);
+
+        // Paint walls:
+        // NOTE: Not super efficient but done for aesthetics
+        for(Node<Wall> wall : this.getWalls()) {
+            for(int w = 0; w < wall.getValue().getWidth(); w++){
+                for(int h = 0; h < wall.getValue().getHeight(); h++) {
+                    g.setColor(Color.GRAY);
+                    g.fillRect((wall.getValue().getX() + w) * 40, (wall.getValue().getY() + h) * 40, 40,  40);
+                    g.setColor(new Color(220, 220, 220));
+                    g.drawRect((wall.getValue().getX() + w) * 40, (wall.getValue().getY() + h) * 40, 40,  40);
+                }
+            }
+        }
+
+        // Paint Goal states
+        for(Node<Location> goal : this.getEndNodes()){
+            g.setColor(new Color(189, 57, 30));
+            g.fillRect(goal.getValue().getX() * 40, goal.getValue().getY() * 40, 40,  40);
+        }
+        // Paint searched nodes
+        for(Node<Location> node : this.visited){
+            g.setColor(Color.CYAN);
+            g.fillRect(node.getValue().getX() * 40, node.getValue().getY() * 40, 40,  40);
+            g.setColor(new Color(220, 220, 220));
+            g.drawRect(node.getValue().getX() * 40, node.getValue().getY() * 40, 40,  40);
+        }
+
+        //Paint current node
+        if(this.current != null){
+            g.setColor(Color.ORANGE);
+            g.fillRect(current.getValue().getX() * 40, current.getValue().getY() * 40, 40,  40);
+            g.setColor(new Color(220, 220, 220));
+            g.drawRect(current.getValue().getX() * 40, current.getValue().getY() * 40, 40,  40);
+        }
+        //Paint path
+        if(!this.path.isEmpty()){
+            for(Node<Location> node : this.path) {
+                g.setColor(Color.MAGENTA);
+                g.fillRect(node.getValue().getX() * 40, node.getValue().getY() * 40, 40, 40);
+                g.setColor(new Color(220, 220, 220));
+                g.drawRect(node.getValue().getX() * 40, node.getValue().getY() * 40, 40, 40);
+            }
+        }
+
     }
 
     @Override
     public String toString() {
         return "Map{" +
-                "width=" + width +
-                ", height=" + height +
+                "width=" + mazeWidth +
+                ", height=" + mazeHeight +
                 ", number of walls=" + walls.size() +
                 ", walls=" + walls +
                 ", startNode=" + startNode +
