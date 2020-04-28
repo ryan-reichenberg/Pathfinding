@@ -12,7 +12,7 @@ public class FileHandler {
         try {
 
             // TODO: Needs major clean up
-            BufferedReader reader = new BufferedReader(new FileReader("resources/"+fileName));
+            BufferedReader reader = new BufferedReader(new FileReader(System.getProperty("user.dir")+"/"+fileName));
             MapBuilder builder = new MapBuilder();
             String line;
             while ((line = reader.readLine()) != null) {

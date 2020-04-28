@@ -1,52 +1,41 @@
 package com.assignment1;
 
-import com.assignment1.algorithms.SearchType;
-import com.assignment1.ui.ControlPanel;
-import com.assignment1.ui.GridPanel;
 
-import javax.swing.*;
-import java.awt.*;
+import com.assignment1.algorithms.SearchResult;
+import com.assignment1.algorithms.SearchType;
+import com.assignment1.exception.UnkownSearchAlgorithmExeption;
+
+import javax.sound.midi.SysexMessage;
 
 public class Main {
 
-    private static JPanel container;
-    private static GridPanel canvas;
-    private static ControlPanel controls;
-    private static JFrame frame;
 
     public static void main(String[] args) throws InterruptedException {
-        int w = 11 *  40;
-        int h = 5* 40;
-        int controlsW = 200;
-        int margin = 10;
 
-        Map map = FileHandler.readFile("map.txt");
+        if(args.length >= 1) {
+            // Handle file
+            Map map = FileHandler.readFile(args[0]);
 
+            /** Handle command line arguments **/
 
-        frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(null);
-
-        frame.setPreferredSize(new Dimension(w + controlsW + 15 + (margin * 3), h + 40 + (margin * 2)));
-
-        container = new JPanel();
-        container.setLayout(null);
-
-        controls = new ControlPanel(controlsW, 120);
-        controls.setBounds(w + (margin * 2), margin, controlsW, h);
-
-        map.setBounds(margin, margin, w, h);
-
-        container.add(controls);
-        container.add(map);
-
-        frame.setContentPane(container);
-        frame.pack();
-        frame.setVisible(true);
-
-        // This should happen on start clicked
-        Thread.sleep(500);
-        map.search(SearchType.IDA_STAR);
+            //No command line parameters
+            if (args.length == 1) {
+                // Launch UI
+                map.launch();
+            } else {
+                SearchType type = SearchType.valueOf(args[1].toUpperCase());
+                if(type == null) {
+                    throw new UnkownSearchAlgorithmExeption("Unknown Search Algorithm: "+ args[1]);
+                }
+                SearchResult result = map.launch(type);
+                System.out.println(args[0] +" | " + args[1] + " | " + (result.isSolutionFound() ? result.getVistedNodes() : "No solution found"));
+                if(result.isSolutionFound()){
+                    System.out.println(result.getPath());
+                }
+            }
+        } else {
+            System.out.println("Please enter the name of the map file. e.g. map.txt");
+        }
 
     }
 }

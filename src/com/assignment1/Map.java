@@ -12,7 +12,6 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Map extends JPanel {
 
@@ -30,8 +29,7 @@ public class Map extends JPanel {
     private double depthBound = 0;
     private boolean solution = false;
     private boolean ui;
-    private BasicStroke defaultStroke;
-    private BasicStroke widerStroke;
+    private Collection collection;
 
 
     public Map(int mazeWidth, int mazeHeight, List<Node<Wall>> walls, Node<Location> startNode, List<Node<Location>> endNodes, boolean ui) {
@@ -45,10 +43,6 @@ public class Map extends JPanel {
         this.tempFrontier = new HashMap<>();
         this.path = new ArrayList<>();
         this.ui = ui;
-
-        this.defaultStroke = new BasicStroke();
-        this.widerStroke = new BasicStroke(2);
-
 
         setBorder(new LineBorder(Color.gray));
     }
@@ -113,13 +107,26 @@ public class Map extends JPanel {
         }
     }
 
+    public void reset(){
+        if(collection != null && !collection.isEmpty())
+            this.collection.clear();
+        if(!visited.isEmpty())
+            this.visited.clear();
+        if(current != null)
+            this.current = null;
+        if(!path.isEmpty())
+            this.path.clear();
+        repaint();
+    }
+
     public SearchResult search(SearchType type) throws InterruptedException {
-        Collection collection = determineDataStructureForType(type);
+        this.collection = determineDataStructureForType(type);
         SearchResult result = null;
         if(type == SearchType.IDDFS) {
             for(int depthLevel = 0; depthLevel <= Integer.MAX_VALUE; depthLevel++){
                 result = search(collection, type, depthLevel);
-                if(solution) break;
+                // This check might break if we don't find the solution
+                if(result.isSolutionFound()) break;
                 visited.clear();
             }
             return result;
@@ -136,18 +143,23 @@ public class Map extends JPanel {
         while (!collection.isEmpty()) {
             Object element = collection instanceof Stack ? ((Stack) collection).pop() : ((Queue) collection).poll();
             this.current = (Node<Location>) element;
-//            repaint();
             // Check for goal
             if (current.getValue().equals(this.getEndNodes().get(0).getValue())) {
+                StringBuilder sb = new StringBuilder();
+                // Re loop for aesthetics and for directions
                 for(Node<Location> location : current.getPath()){
-                    Thread.sleep(400);
-                    this.path.add(location);
-                    repaint();
+                    if(ui) {
+                        Thread.sleep(400);
+                        this.path.add(location);
+                        repaint();
+                    } else {
+                        sb.append(location.getDirection().name()).append("; ");
+                    }
                 }
-                this.path = current.getPath();
-                if(type == SearchType.IDDFS)
-                    System.out.println("Found at depth: "+current.getDepth());
-                return null;
+                if(sb.length() > 0){
+                    sb.deleteCharAt(sb.length() - 1);
+                }
+                return new SearchResult(visited.size(), sb.toString(), depthLevel, true);
             }
 
             // Add children
@@ -162,12 +174,12 @@ public class Map extends JPanel {
                addNodeToFrontier(getStartNode(), collection, SearchType.IDA_STAR);
                nextDepthBound.clear();
             }
-            repaint();
-            Thread.sleep(500);
+            if(ui) {
+                repaint();
+                Thread.sleep(500);
+            }
         }
-        System.out.println("Couldn't find solution at depth: "+ depthLevel);
-        visited.forEach(visitedNode -> System.out.println(visitedNode));
-        return null;
+        return new SearchResult(0, "", depthLevel, false);
 
     }
 
@@ -240,18 +252,20 @@ public class Map extends JPanel {
         return ((AStarNode) collection.stream().filter(node -> ((AStarNode) node).getValue().equals(other.getValue())).findFirst().orElse(null));
     }
 
-    public void launch(SearchType type) throws InterruptedException {
-        if(ui){
-            new Launcher(this).launch(type);
-        } else {
-            //  TODO: Return SearchResult
-            search(type);
-        }
+    public void launch() throws InterruptedException {
+        this.ui = true;
+        new Launcher(this).launch();
+
+    }
+    public SearchResult launch(SearchType type) throws InterruptedException {
+        this.ui = false;
+        return search(type);
 
     }
 
     @Override
     protected void paintComponent(Graphics g1) {
+//        System.out.println("Painting");
         super.paintComponent(g1);
 
         Graphics2D g = (Graphics2D) g1;
