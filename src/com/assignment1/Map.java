@@ -21,7 +21,7 @@ public class Map extends JPanel {
     private Node<Location> startNode;
     private List<Node<Location>> endNodes;
     public List<Node<Location>> visited;
-    private List<Double> nextDepthBound;
+    private PriorityQueue<Double> nextDepthBound;
     private List<Node<Location>> path;
     private Node<Location> current = null;
     // Used to quickly determine if node with same state is in the open set and to retrieve that states best F value
@@ -30,6 +30,7 @@ public class Map extends JPanel {
     private boolean solution = false;
     private boolean ui;
     private Collection collection;
+    private int i = 0;
 
 
     public Map(int mazeWidth, int mazeHeight, List<Node<Wall>> walls, Node<Location> startNode, List<Node<Location>> endNodes, boolean ui) {
@@ -39,7 +40,7 @@ public class Map extends JPanel {
         this.startNode = startNode;
         this.endNodes = endNodes;
         this.visited = new ArrayList<>();
-        this.nextDepthBound = new ArrayList<>();
+        this.nextDepthBound = new PriorityQueue();
         this.tempFrontier = new HashMap<>();
         this.path = new ArrayList<>();
         this.ui = ui;
@@ -95,11 +96,11 @@ public class Map extends JPanel {
         switch(type){
             case DFS:
             case IDDFS:
+            case IDA_STAR:
                 return new  Stack();
             case BFS:
                 return new ArrayDeque();
             case  A_STAR:
-            case IDA_STAR:
             case GBFS:
                 return new PriorityQueue();
             default:
@@ -137,12 +138,14 @@ public class Map extends JPanel {
     private SearchResult search(Collection collection, SearchType type, int depthLevel) throws InterruptedException {
 
         Node<Location> startNode =  addNodeToFrontier(getStartNode(), collection, type);
-        if(type == SearchType.IDA_STAR && startNode instanceof AStarNode){
+        if(type == SearchType.IDA_STAR){
             depthBound = ((AStarNode<Location>) startNode).getF();
+            collection.add(startNode);
         }
         while (!collection.isEmpty()) {
             Object element = collection instanceof Stack ? ((Stack) collection).pop() : ((Queue) collection).poll();
             this.current = (Node<Location>) element;
+            i++;
             // Check for goal
             if (current.getValue().equals(this.getEndNodes().get(0).getValue())) {
                 StringBuilder sb = new StringBuilder();
@@ -159,18 +162,20 @@ public class Map extends JPanel {
                 if(sb.length() > 0){
                     sb.deleteCharAt(sb.length() - 1);
                 }
+                System.out.println(i);
+                System.out.println(collection.size());
                 return new SearchResult(visited.size(), sb.toString(), depthLevel, true);
             }
 
-            // Add children
+            // IDDFS Check
             if(type == SearchType.IDDFS && current.getDepth() >= depthLevel) {
                 continue;
             }
+            // Add children
             addChildrenToFrontier(collection, current, type);
             // IDA Check
             if(type == SearchType.IDA_STAR && collection.size() == 1){
-               Collections.sort(nextDepthBound);
-               depthBound = nextDepthBound.get(0);
+               depthBound = nextDepthBound.poll();
                addNodeToFrontier(getStartNode(), collection, SearchType.IDA_STAR);
                nextDepthBound.clear();
             }
@@ -191,12 +196,6 @@ public class Map extends JPanel {
                     Node<Location> node = new Node<>(location, current, direction);
                     Node<Location> newNode = addNodeToFrontier(node, collection, type);
                     if(newNode == null) continue;
-                    if (type == SearchType.IDA_STAR && newNode instanceof AStarNode) {
-                        if (((AStarNode) newNode).getF() >= depthBound) {
-                            // Don't worry about duplicates
-                            nextDepthBound.add(((AStarNode) newNode).getF());
-                        }
-                    }
                 }
             }
         }
@@ -213,14 +212,19 @@ public class Map extends JPanel {
 
             // Check if child node is in queue and if the version in queue has a smaller F value
             AStarNode previousVersion = getValueFromCollection(collection, node);
-            if(previousVersion != null && previousVersion.getF() < aStarNode.getF()){
-                return null;
-            }
+
             if(type == SearchType.A_STAR) {
+                if(previousVersion != null && previousVersion.getF() < aStarNode.getF()){
+                    return null;
+                }
                 checkForVisited(collection, aStarNode);
                 tempFrontier.put(aStarNode, aStarNode.getF());
             } else {
-                collection.add(aStarNode);
+                if (aStarNode.getF() <= depthBound) {
+                    collection.add(aStarNode);
+                }else {
+                    nextDepthBound.add(aStarNode.getF());
+                }
             }
             return aStarNode;
         } else if (type == SearchType.GBFS) {
@@ -331,12 +335,19 @@ public class Map extends JPanel {
     @Override
     public String toString() {
         return "Map{" +
-                "width=" + mazeWidth +
-                ", height=" + mazeHeight +
-                ", number of walls=" + walls.size() +
+                "mazeWidth=" + mazeWidth +
+                ", mazeHeight=" + mazeHeight +
                 ", walls=" + walls +
                 ", startNode=" + startNode +
                 ", endNodes=" + endNodes +
+                ", visited=" + visited +
+                ", nextDepthBound=" + nextDepthBound +
+                ", path=" + path +
+                ", current=" + current +
+                ", tempFrontier=" + tempFrontier +
+                ", depthBound=" + depthBound +
+                ", solution=" + solution +
+                ", collection=" + collection +
                 '}';
     }
 }

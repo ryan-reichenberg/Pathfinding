@@ -1,6 +1,5 @@
 package com.assignment1.ui;
 
-import com.assignment1.FileHandler;
 import com.assignment1.Map;
 import com.assignment1.algorithms.SearchType;
 
@@ -25,7 +24,7 @@ public class ControlPanel extends JPanel {
 
         selector = new JComboBox<>();
         selector.addItem("Depth First Search");
-        selector.addItem("Breath First Search");
+        selector.addItem("Breadth First Search");
         selector.addItem("Greedy Best First Search");
         selector.addItem("A*");
         selector.addItem("Iterative Deepening A*");
