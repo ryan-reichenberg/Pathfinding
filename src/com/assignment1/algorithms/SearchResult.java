@@ -1,20 +1,24 @@
 package com.assignment1.algorithms;
 
 public class SearchResult {
-    private int vistedNodes;
+    private int visitedNodes;
     private String path;
     private int depth;
     private boolean solutionFound;
+    private int iterations;
+    private int frontierSize;
 
-    public SearchResult(int vistedNodes, String path, int depth, boolean solutionFound) {
-        this.vistedNodes = vistedNodes;
+    public SearchResult(int vistedNodes, String path, int depth, boolean solutionFound, int iterations, int frontierSize) {
+        this.visitedNodes = vistedNodes;
         this.path = path;
         this.depth = depth;
         this.solutionFound = solutionFound;
+        this.iterations = iterations;
+        this.frontierSize = frontierSize;
     }
 
     public int getVistedNodes() {
-        return vistedNodes;
+        return visitedNodes;
     }
 
     public String getPath() {
@@ -27,5 +31,13 @@ public class SearchResult {
 
     public boolean isSolutionFound() {
         return solutionFound;
+    }
+
+    public int getIterations() {
+        return iterations;
+    }
+
+    public int getFrontierSize() {
+        return frontierSize;
     }
 }

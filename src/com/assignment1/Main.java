@@ -27,11 +27,18 @@ public class Main {
                 if(type == null) {
                     throw new UnkownSearchAlgorithmExeption("Unknown Search Algorithm: "+ args[1]);
                 }
+                long start = System.nanoTime();
                 SearchResult result = map.launch(type);
-                System.out.println(args[0] +" | " + args[1] + " | " + (result.isSolutionFound() ? result.getVistedNodes() : "No solution found"));
+                long end = System.nanoTime();
+                System.out.println(args[0] +" | " + args[1] + " | " + (result.isSolutionFound() ? result.getVistedNodes() +" | " : "No solution found | "
+                        + (type == SearchType.IDDFS ? " at max depth of: "+ result.getDepth() : ""))
+                        + result.getIterations() +" | " +result.getFrontierSize() + " | ");
                 if(result.isSolutionFound()){
+                    System.out.println(type == SearchType.IDDFS ? "At depth: "+ result.getDepth() : "");
                     System.out.println(result.getPath());
                 }
+                System.out.println("Finished in: "+ (end - start) / 1000000+" ms");
+
             }
         } else {
             System.out.println("Please enter the name of the map file. e.g. map.txt");

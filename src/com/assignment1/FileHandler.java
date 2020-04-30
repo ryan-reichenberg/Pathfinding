@@ -12,7 +12,7 @@ public class FileHandler {
         try {
 
             // TODO: Needs major clean up
-            BufferedReader reader = new BufferedReader(new FileReader(System.getProperty("user.dir")+"/"+fileName));
+            BufferedReader reader = new BufferedReader(new FileReader(System.getProperty("user.dir") + "/" + fileName));
             MapBuilder builder = new MapBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -24,8 +24,8 @@ public class FileHandler {
                     builder.setWidth(Integer.parseInt(split[1]));
                 }
 
-                if(line.startsWith("(")) {
-                    if(line.contains("|")){
+                if (line.startsWith("(")) {
+                    if (line.contains("|")) {
                         // Wow.
                         //TODO: For loop this out.
                         line = line.replaceAll(" ", "");
@@ -35,20 +35,17 @@ public class FileHandler {
 
                         String[] split1 = split[0].split(",");
                         String[] split2 = split[1].split(",");
-//                        System.out.println(split1[0]);
-//                        System.out.println(split1[1]);
-//                        System.out.println(split2[0]);
-//                        System.out.println(split2[1]);
                         builder.addGoalNode(new Node<>(new Location(Integer.valueOf(split1[0]), Integer.valueOf(split1[1]))));
                         builder.addGoalNode(new Node<>(new Location(Integer.valueOf(split2[0]), Integer.valueOf(split2[1]))));
                         continue;
                     }
+
                     line = line.substring(1, line.length() - 1);
-                    String[] split  = line.split(",");
-                    if(split.length == 2){
+                    String[] split = line.split(",");
+                    if (split.length == 2) {
                         // Start node
                         builder.addStartNode(new Node<>(new Location(Integer.valueOf(split[0]), Integer.valueOf(split[1]))));
-                    }else if (split.length == 4){
+                    } else if (split.length == 4) {
                         //wall
                         builder.addWall(new Node<>(new Wall(Integer.valueOf(split[0]), Integer.valueOf(split[1]),
                                 Integer.valueOf(split[2]), Integer.valueOf(split[3]))));
@@ -66,7 +63,4 @@ public class FileHandler {
             return null;
         }
     }
-
-
-    private static void buildMap(){}
 }

@@ -30,7 +30,8 @@ public class Map extends JPanel {
     private boolean solution = false;
     private boolean ui;
     private Collection collection;
-    private int i = 0;
+    private int visitedNodes = 0;
+    private final int MAX_DEPTH = 100;
 
 
     public Map(int mazeWidth, int mazeHeight, List<Node<Wall>> walls, Node<Location> startNode, List<Node<Location>> endNodes, boolean ui) {
@@ -124,7 +125,7 @@ public class Map extends JPanel {
         this.collection = determineDataStructureForType(type);
         SearchResult result = null;
         if(type == SearchType.IDDFS) {
-            for(int depthLevel = 0; depthLevel <= Integer.MAX_VALUE; depthLevel++){
+            for(int depthLevel = 0; depthLevel <= MAX_DEPTH; depthLevel++){
                 result = search(collection, type, depthLevel);
                 // This check might break if we don't find the solution
                 if(result.isSolutionFound()) break;
@@ -145,12 +146,13 @@ public class Map extends JPanel {
         while (!collection.isEmpty()) {
             Object element = collection instanceof Stack ? ((Stack) collection).pop() : ((Queue) collection).poll();
             this.current = (Node<Location>) element;
-            i++;
+            visitedNodes++;
             // Check for goal
             if (current.getValue().equals(this.getEndNodes().get(0).getValue())) {
                 StringBuilder sb = new StringBuilder();
-                // Re loop for aesthetics and for directions
+                // Re loop to translate path to string
                 for(Node<Location> location : current.getPath()){
+                    // If UI  add one at a time to create staggering effect
                     if(ui) {
                         Thread.sleep(400);
                         this.path.add(location);
@@ -162,9 +164,7 @@ public class Map extends JPanel {
                 if(sb.length() > 0){
                     sb.deleteCharAt(sb.length() - 1);
                 }
-                System.out.println(i);
-                System.out.println(collection.size());
-                return new SearchResult(visited.size(), sb.toString(), depthLevel, true);
+                return new SearchResult(visited.size(), sb.toString(), depthLevel, true, visitedNodes, collection.size());
             }
 
             // IDDFS Check
@@ -184,8 +184,7 @@ public class Map extends JPanel {
                 Thread.sleep(500);
             }
         }
-        return new SearchResult(0, "", depthLevel, false);
-
+        return new SearchResult(0, "", depthLevel, false, visitedNodes, collection.size());
     }
 
     private void addChildrenToFrontier(Collection collection, Node<Location>  current, SearchType type) {
@@ -267,6 +266,12 @@ public class Map extends JPanel {
 
     }
 
+    //  Overrides
+
+    /**
+     * Paints the maze onto the UI frame
+     * @param g1
+     */
     @Override
     protected void paintComponent(Graphics g1) {
 //        System.out.println("Painting");
