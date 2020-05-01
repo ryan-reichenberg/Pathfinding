@@ -184,7 +184,7 @@ public class Map extends JPanel {
                 Thread.sleep(500);
             }
         }
-        return new SearchResult(0, "", depthLevel, false, visitedNodes, collection.size());
+        return new SearchResult(0, "", depthLevel, false, current.getDepth(), collection.size());
     }
 
     private void addChildrenToFrontier(Collection collection, Node<Location>  current, SearchType type) {

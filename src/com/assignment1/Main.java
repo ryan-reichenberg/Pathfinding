@@ -30,9 +30,9 @@ public class Main {
                 long start = System.nanoTime();
                 SearchResult result = map.launch(type);
                 long end = System.nanoTime();
-                System.out.println(args[0] +" | " + args[1] + " | " + (result.isSolutionFound() ? result.getVistedNodes() +" | " : "No solution found | "
-                        + (type == SearchType.IDDFS ? " at max depth of: "+ result.getDepth() : ""))
-                        + result.getIterations() +" | " +result.getFrontierSize() + " | ");
+                System.out.println(args[0] +" | " + args[1] + " | " + (result.isSolutionFound() ? result.getVistedNodes() +" | " : "No solution found "
+                        + (type == SearchType.IDDFS ? " at max depth of: "+ result.getDepth() : "") +" | ")
+                        + (args.length == 3 && args[2].equals("-verbose")? result.getIterations() +" | " +result.getFrontierSize() + " | " : ""));
                 if(result.isSolutionFound()){
                     System.out.println(type == SearchType.IDDFS ? "At depth: "+ result.getDepth() : "");
                     System.out.println(result.getPath());

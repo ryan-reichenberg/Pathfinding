@@ -14,8 +14,8 @@ public class Launcher {
 
     public Launcher(Map map) {
         this.map = map;
-        int w = 11 *  40;
-        int h = 5* 40;
+        int w = map.getMazeWidth() *  40;
+        int h = map.getMazeHeight()* 40;
         int controlsW = 200;
         int margin = 10;
 
